@@ -1,0 +1,10 @@
+services:
+  calculator:
+    build: .
+    image: calculator:latest
+    ports:
+      - "8080:8080"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    restart: unless-stopped

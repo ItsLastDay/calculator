@@ -1,0 +1,376 @@
+/* Windows 11 calculator look: Fluent colours, light and dark themes. */
+
+:root {
+  --bg: #f3f3f3;
+  --panel: #f9f9f9;
+  --text: #1a1a1a;
+  --muted: #5f5f5f;
+  --stroke: rgb(0 0 0 / 6%);
+  --key-number: #ffffff;
+  --key-number-hover: #f6f6f6;
+  --key-function: #f9f9f9;
+  --key-function-hover: #f0f0f0;
+  --key-pressed: #e8e8e8;
+  --accent: #005fb8;
+  --accent-hover: #1a6fc0;
+  --accent-pressed: #3381c9;
+  --accent-text: #ffffff;
+  --danger: #c42b1c;
+  --history-hover: rgb(0 0 0 / 4%);
+  --radius: 6px;
+
+  color-scheme: light dark;
+  font-family:
+    'Segoe UI Variable Text',
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    Roboto,
+    sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #202020;
+    --panel: #272727;
+    --text: #ffffff;
+    --muted: #c5c5c5;
+    --stroke: rgb(255 255 255 / 7%);
+    --key-number: #3b3b3b;
+    --key-number-hover: #424242;
+    --key-function: #323232;
+    --key-function-hover: #383838;
+    --key-pressed: #2a2a2a;
+    --accent: #4cc2ff;
+    --accent-hover: #48b1e8;
+    --accent-pressed: #42a1d2;
+    --accent-text: #000000;
+    --danger: #ff99a4;
+    --history-hover: rgb(255 255 255 / 6%);
+  }
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--bg);
+}
+
+.app {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 24px 16px;
+}
+
+.app-header {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.app-header h1 {
+  margin: 0;
+  font-size: 0.875rem;
+  font-weight: 400;
+  color: var(--muted);
+}
+
+.app-docs-link {
+  margin-left: auto;
+  font-size: 0.875rem;
+  color: var(--muted);
+}
+
+.app-docs-link:hover {
+  color: var(--text);
+}
+
+.app-header p {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  order: -1;
+}
+
+.calculator {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: minmax(0, 1fr);
+}
+
+@media (min-width: 720px) {
+  .calculator {
+    grid-template-columns: minmax(0, 400px) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--stroke);
+  border-radius: 8px;
+  padding: 8px;
+  box-shadow: 0 2px 8px rgb(0 0 0 / 8%);
+}
+
+/* Display */
+
+.display {
+  position: relative;
+  display: grid;
+  justify-items: end;
+  padding: 12px 8px 16px;
+  min-height: 132px;
+  align-content: end;
+}
+
+.display-expression {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: 0.9rem;
+  color: var(--muted);
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.display-value {
+  font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
+  font-size: 3rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+.display-value-medium {
+  font-size: 2.1rem;
+}
+
+.display-value-small {
+  font-size: 1.5rem;
+}
+
+/* Error messages are full sentences from the backend, so they wrap. */
+.display-value-error {
+  font-size: 1.3rem;
+  line-height: 1.3;
+  overflow-wrap: normal;
+}
+
+/* Indeterminate progress bar while the backend computes. */
+.display-progress {
+  position: absolute;
+  inset: auto 8px 4px;
+  height: 2px;
+  overflow: hidden;
+  border-radius: 1px;
+}
+
+.display-progress::after {
+  content: '';
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: var(--accent);
+  animation: progress 1s ease-in-out infinite;
+}
+
+@keyframes progress {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(350%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .display-progress::after {
+    width: 100%;
+    animation: none;
+    opacity: 0.6;
+  }
+}
+
+/* Keypad */
+
+.keypad {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 3px;
+}
+
+.key {
+  height: 52px;
+  font: inherit;
+  font-size: 1rem;
+  color: var(--text);
+  border: 1px solid var(--stroke);
+  border-radius: var(--radius);
+  cursor: pointer;
+  user-select: none;
+  touch-action: manipulation;
+}
+
+.key-number {
+  background: var(--key-number);
+  font-size: 1.2rem;
+  font-weight: 600;
+}
+
+.key-function,
+.key-operator {
+  background: var(--key-function);
+}
+
+.key-operator {
+  font-size: 1.35rem;
+}
+
+.key-equals {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-text);
+  font-size: 1.35rem;
+}
+
+.key-number:hover {
+  background: var(--key-number-hover);
+}
+
+.key-function:hover,
+.key-operator:hover {
+  background: var(--key-function-hover);
+}
+
+.key-equals:hover {
+  background: var(--accent-hover);
+}
+
+.key:active {
+  background: var(--key-pressed);
+  color: var(--muted);
+}
+
+.key-equals:active {
+  background: var(--accent-pressed);
+  color: var(--accent-text);
+}
+
+.key:disabled {
+  opacity: 0.4;
+  cursor: default;
+  background: var(--key-function);
+}
+
+.key:focus-visible,
+.history-item:focus-visible,
+.history-clear:focus-visible {
+  outline: 2px solid var(--text);
+  outline-offset: 1px;
+}
+
+/* History */
+
+.history {
+  min-width: 0;
+}
+
+.history-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 36px;
+  padding: 0 4px;
+}
+
+.history h2 {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 600;
+}
+
+.history-clear {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.history-clear:hover {
+  background: var(--history-hover);
+}
+
+.history-empty {
+  margin: 8px 4px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.history-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.history-item {
+  display: grid;
+  justify-items: end;
+  gap: 2px;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: var(--radius);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  text-align: right;
+  cursor: pointer;
+}
+
+.history-item:hover {
+  background: var(--history-hover);
+}
+
+.history-expression {
+  font-size: 0.85rem;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.history-value {
+  font-size: 1.35rem;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 380px) {
+  .app {
+    padding: 16px 8px;
+  }
+
+  .key {
+    height: 48px;
+  }
+
+  .display-value {
+    font-size: 2.5rem;
+  }
+}

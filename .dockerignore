@@ -1,0 +1,9 @@
+.git
+.github
+docs
+**/node_modules
+**/dist
+**/coverage
+**/coverage.out
+**/coverage.html
+**/*.log

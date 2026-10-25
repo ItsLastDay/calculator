@@ -1,0 +1,27 @@
+ % Coverage report from v8
+-------------------|---------|----------|---------|---------|-------------------
+File               | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-------------------|---------|----------|---------|---------|-------------------
+All files          |   99.84 |    97.57 |   98.03 |   99.84 |                   
+ src               |     100 |      100 |     100 |     100 |                   
+  App.tsx          |     100 |      100 |     100 |     100 |                   
+ src/api           |     100 |      100 |    87.5 |     100 |                   
+  client.ts        |     100 |      100 |    87.5 |     100 |                   
+ src/components    |     100 |    95.45 |     100 |     100 |                   
+  Calculator.tsx   |     100 |      100 |     100 |     100 |                   
+  Display.tsx      |     100 |     87.5 |     100 |     100 | 11                
+  History.tsx      |     100 |      100 |     100 |     100 |                   
+  Keypad.tsx       |     100 |      100 |     100 |     100 |                   
+ src/hooks         |    99.2 |    97.82 |     100 |    99.2 |                   
+  useCalculator.ts |   99.09 |      100 |     100 |   99.09 | 139               
+  useKeyboard.ts   |     100 |    88.88 |     100 |     100 | 13                
+ src/lib           |     100 |    97.43 |     100 |     100 |                   
+  engine.ts        |     100 |    96.84 |     100 |     100 | 182,208,330       
+  format.ts        |     100 |      100 |     100 |     100 |                   
+  keyboard.ts      |     100 |      100 |     100 |     100 |                   
+-------------------|---------|----------|---------|---------|-------------------
+npm notice
+npm notice New major version of npm available! 10.9.9 -> 12.2.1
+npm notice Changelog: https://github.com/npm/cli/releases/tag/v12.2.1
+npm notice To update run: npm install -g npm@12.2.1
+npm notice

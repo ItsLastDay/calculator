@@ -1,0 +1,11 @@
+# Redocly lint findings that are accepted on purpose. Each is scoped to one
+# location, so the rules still apply to anything added later.
+openapi.yaml:
+  # Choosing a license is the project owner's decision; none is declared yet.
+  info-license:
+    - '#/info'
+  # These GETs take no input, so they have no 4xx outcome of their own.
+  # (404/405 apply to every path and are documented in info.description.)
+  operation-4xx-response:
+    - '#/paths/~1api~1v1~1openapi.yaml/get/responses'
+    - '#/paths/~1healthz/get/responses'

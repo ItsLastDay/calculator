@@ -1,0 +1,279 @@
+openapi: 3.1.0
+info:
+  title: Calculator API
+  version: 1.0.0
+  description: |
+    Stateless REST API for basic and advanced arithmetic.
+
+    ## Errors
+
+    Every error response is a `Problem` object, based on
+    [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) and served as
+    `application/problem+json`. It has two members:
+
+    - `code`: a stable, machine-readable reason. Branch on this, never on text.
+    - `detail`: a sentence explaining this occurrence, safe to show to users.
+
+    These apply to every path, so they are not repeated under each operation:
+
+    | Status | `code`               | When                                                                    |
+    | ------ | -------------------- | ----------------------------------------------------------------------- |
+    | 404    | `NOT_FOUND`          | Any path under `/api/` that is not documented here.                     |
+    | 405    | `METHOD_NOT_ALLOWED` | A documented path called with an undocumented method. The `Allow` header lists the supported methods. |
+    | 500    | `INTERNAL_ERROR`     | An unexpected server failure. Details are logged, never returned.      |
+
+    For example, `GET /api/v1/calculations` returns `405` with `Allow: POST`
+    and the body
+    `{"code": "METHOD_NOT_ALLOWED", "detail": "Method GET is not allowed on this resource; allowed: POST."}`.
+
+    Clients should ignore response members they do not recognise, so new
+    members can be added without breaking them.
+servers:
+  - url: /
+security: []
+
+paths:
+  /api/v1/calculations:
+    post:
+      operationId: createCalculation
+      summary: Evaluate a calculation
+      description: |
+        Evaluates the operation on the given operands. Nothing is stored, so
+        the response is `200 OK` rather than `201 Created`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CalculationRequest'
+            examples:
+              add:
+                summary: 2 + 3
+                value: { operation: add, operands: [2, 3] }
+              sqrt:
+                summary: √16
+                value: { operation: sqrt, operands: [16] }
+              percentage:
+                summary: 15% of 200
+                value: { operation: percentage, operands: [15, 200] }
+      responses:
+        '200':
+          description: The result.
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Calculation'
+              example: { result: 5 }
+        '400':
+          $ref: '#/components/responses/BadRequest'
+        '413':
+          $ref: '#/components/responses/PayloadTooLarge'
+        '415':
+          $ref: '#/components/responses/UnsupportedMediaType'
+        '422':
+          $ref: '#/components/responses/UnprocessableEntity'
+
+  /api/v1/openapi.yaml:
+    get:
+      operationId: getOpenAPI
+      summary: This document
+      description: Rendered as interactive documentation at `/docs/`.
+      responses:
+        '200':
+          description: The OpenAPI description of this API.
+          content:
+            application/yaml:
+              schema:
+                type: string
+
+  /healthz:
+    get:
+      operationId: health
+      summary: Liveness probe
+      responses:
+        '204':
+          description: The service is up. There is no body.
+
+components:
+  schemas:
+    Operation:
+      type: string
+      enum: [add, subtract, multiply, divide, power, sqrt, percentage]
+      description: |
+        - `add`, `subtract`, `multiply`, `divide`, `power`: two operands, `[a, b]`
+        - `sqrt`: one operand, `[a]`
+        - `percentage`: two operands, "a percent of b", that is a / 100 × b.
+          The percent `a` must not be negative; the base `b` may be.
+
+    CalculationRequest:
+      type: object
+      additionalProperties: false
+      required: [operation, operands]
+      properties:
+        operation:
+          $ref: '#/components/schemas/Operation'
+        operands:
+          type: array
+          minItems: 1
+          maxItems: 2
+          items:
+            type: number
+          description: Finite numbers; how many depends on the operation.
+
+    Calculation:
+      type: object
+      required: [result]
+      properties:
+        result:
+          type: number
+          description: IEEE 754 double; always finite.
+
+    Problem:
+      type: object
+      required: [code, detail]
+      description: |
+        An error. The format is based on
+        [RFC 9457](https://www.rfc-editor.org/rfc/rfc9457) Problem Details.
+      properties:
+        code:
+          type: string
+          description: |
+            Stable, machine-readable reason. New codes may be added, so treat
+            unknown codes as a generic error for their HTTP status.
+
+            | Code | Status | Meaning |
+            | ---- | ------ | ------- |
+            | `INVALID_REQUEST` | 400 | The body is not a single JSON object of the documented shape: empty, malformed, unknown fields, wrong types or missing fields. |
+            | `UNSUPPORTED_OPERATION` | 400 | `operation` is not one of the supported names. |
+            | `INVALID_OPERAND_COUNT` | 400 | Wrong number of operands for the operation. |
+            | `INVALID_OPERAND` | 400 | An operand is `null`. |
+            | `PAYLOAD_TOO_LARGE` | 413 | The body exceeds 65,536 bytes. |
+            | `UNSUPPORTED_MEDIA_TYPE` | 415 | `Content-Type` is not `application/json` (or another `+json` type). |
+            | `DIVISION_BY_ZERO` | 422 | `divide` by 0, or `power` with base 0 and a negative exponent. |
+            | `NEGATIVE_SQUARE_ROOT` | 422 | `sqrt` of a negative number. |
+            | `NEGATIVE_PERCENTAGE` | 422 | `percentage` with a negative percent (first operand). |
+            | `UNDEFINED_RESULT` | 422 | The result is not a number, e.g. `power` of -8 to 0.5. |
+            | `RESULT_OUT_OF_RANGE` | 422 | The result overflows a 64-bit float, e.g. 1e308 × 10. |
+            | `NOT_FOUND` | 404 | No such path under `/api/`. |
+            | `METHOD_NOT_ALLOWED` | 405 | Method not supported on this path; see the `Allow` header. |
+            | `INTERNAL_ERROR` | 500 | Unexpected server failure. |
+          enum:
+            - INVALID_REQUEST
+            - UNSUPPORTED_OPERATION
+            - INVALID_OPERAND_COUNT
+            - INVALID_OPERAND
+            - PAYLOAD_TOO_LARGE
+            - UNSUPPORTED_MEDIA_TYPE
+            - DIVISION_BY_ZERO
+            - NEGATIVE_SQUARE_ROOT
+            - NEGATIVE_PERCENTAGE
+            - UNDEFINED_RESULT
+            - RESULT_OUT_OF_RANGE
+            - NOT_FOUND
+            - METHOD_NOT_ALLOWED
+            - INTERNAL_ERROR
+        detail:
+          type: string
+          description: |
+            A sentence explaining this occurrence of the problem, safe to show
+            to end users. Its wording may change; do not parse it.
+
+  responses:
+    BadRequest:
+      description: |
+        The request is malformed, so it cannot be evaluated. Fix the request;
+        retrying it unchanged will fail again. The `code` says what is wrong:
+        `INVALID_REQUEST`, `UNSUPPORTED_OPERATION`, `INVALID_OPERAND_COUNT` or
+        `INVALID_OPERAND`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            invalidJson:
+              summary: Truncated JSON
+              value:
+                code: INVALID_REQUEST
+                detail: 'Request body is not valid JSON: unexpected end of input.'
+            unknownField:
+              summary: Unknown field
+              value:
+                code: INVALID_REQUEST
+                detail: Request body contains unknown field "extra".
+            unsupportedOperation:
+              summary: Unknown operation
+              value:
+                code: UNSUPPORTED_OPERATION
+                detail: 'Unsupported operation: "modulo".'
+            operandCount:
+              summary: Too few operands
+              value:
+                code: INVALID_OPERAND_COUNT
+                detail: 'Wrong number of operands: add expects 2, got 1.'
+            nullOperand:
+              summary: Null operand
+              value:
+                code: INVALID_OPERAND
+                detail: Every operand must be a number, but operands[1] is null.
+
+    PayloadTooLarge:
+      description: |
+        The request body is larger than 65,536 bytes. A valid calculation
+        request is a few dozen bytes. Code: `PAYLOAD_TOO_LARGE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            code: PAYLOAD_TOO_LARGE
+            detail: Request body must not exceed 65536 bytes.
+
+    UnsupportedMediaType:
+      description: |
+        The `Content-Type` header is missing, or is not `application/json` (or
+        another `+json` media type). Code: `UNSUPPORTED_MEDIA_TYPE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          example:
+            code: UNSUPPORTED_MEDIA_TYPE
+            detail: Content-Type must be application/json.
+
+    UnprocessableEntity:
+      description: |
+        The request is well-formed, but the calculation has no finite real
+        result, or breaks a rule of its operation. Show `detail` to the user;
+        this is not a client bug. The `code` says why: `DIVISION_BY_ZERO`,
+        `NEGATIVE_SQUARE_ROOT`, `NEGATIVE_PERCENTAGE`, `UNDEFINED_RESULT` or
+        `RESULT_OUT_OF_RANGE`.
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/Problem'
+          examples:
+            divisionByZero:
+              summary: 1 ÷ 0
+              value:
+                code: DIVISION_BY_ZERO
+                detail: Division by zero.
+            negativeSqrt:
+              summary: √-4
+              value:
+                code: NEGATIVE_SQUARE_ROOT
+                detail: Square root of a negative number is not a real number.
+            negativePercentage:
+              summary: -10% of 50
+              value:
+                code: NEGATIVE_PERCENTAGE
+                detail: Percentage must not be negative.
+            undefinedResult:
+              summary: (-8) ^ 0.5
+              value:
+                code: UNDEFINED_RESULT
+                detail: Result is not a real number.
+            outOfRange:
+              summary: 1e308 × 10
+              value:
+                code: RESULT_OUT_OF_RANGE
+                detail: Result is too large to represent.
